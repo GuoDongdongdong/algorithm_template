@@ -588,3 +588,89 @@ public:
         return res;
     }
 };
+
+// 字典树
+class Trie {
+    vector<vector<int> > next;
+    vector<int> exist;
+    int cnt;
+public:
+    Trie(int n): next(n, vector<int>(26, 0)), exist(n, 0), cnt(0) {}
+
+    void insert(const string& s) {
+        int p = 0;
+        for(auto c : s) {
+            int index = c - 'a';
+            if(!next[p][index]) {
+                next[p][index] = ++cnt;
+            }
+            p = next[p][index];
+        }
+        ++exist[p]; // 可以统计有几个这样的模式串
+    }
+
+    bool find(const string& s) {
+        int p = 0;
+        for(auto c : s) {
+            int index = c - 'a';
+            if(!next[p][index]) {
+                return false;
+            }
+            p = next[p][index];
+        }
+        return exist[p];
+    }
+};
+
+//AC自动机
+class AC {
+    vector<vector<int> > next;
+    vector<int> exist;
+    vector<int> fail;
+    int cnt;
+    int charset_size; // 符号集合大小
+public:
+    AC(int len, int size = 26): next(len, vector<int>(size, 0)), exist(len, 0), fail(len, 0), cnt(0), charset_size(size) {}
+
+    void insert(const string& s) {
+        int p = 0;
+        for(auto c : s) {
+            int index = c - 'a';
+            if(!next[p][index]) {
+                next[p][index] = ++cnt;
+            }
+            p = next[p][index];
+        }
+        ++exist[p];
+    }
+
+    void build() {
+        queue<int> q;
+        for(int i = 0; i < charset_size; ++i) {
+            if(next[0][i]) q.push(next[0][i]);
+        }
+        while(!q.empty()) {
+            int u = q.front(); q.pop();
+            for(int i = 0; i < charset_size; ++i) {
+                if(next[u][i]) {
+                    fail[next[u][i]] = next[fail[u]][i];
+                    q.push(next[u][i]);
+                } else {
+                    next[u][i] = next[fail[u]][i];
+                }
+            }
+        }
+    }
+
+    int query(const string& s) {
+        int p = 0, res = 0;
+        for(auto c : s) {
+            int index = c - 'a';
+            p = next[p][index];
+            for(int i = p; i; i = fail[i]) {
+                res += exist[i];
+            }
+        }
+        return res;
+    }
+};
