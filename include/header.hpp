@@ -674,3 +674,50 @@ public:
         return res;
     }
 };
+
+class HashTable {
+    vector<int> head, next, keys, vals;
+    int size;
+    const int Prime;
+
+public:
+    HashTable(int maxn, int prime): head(maxn, -1), next(maxn), keys(maxn), vals(maxn), size(0), Prime(prime) {}
+
+    void push(int key, int val) {
+        int x = key % Prime; 
+        for(int i = head[x]; ~i; i = next[i]) {
+            if(keys[i] == key) {
+                vals[i] = val;
+                return ;
+            }
+        }
+        next[size] = head[x];
+        keys[size] = key;
+        vals[size] = val;
+        head[x] = size++;
+    }
+
+    int operator[](int key) {
+        int x = key % Prime;
+        for(int i = head[x]; ~i; i = next[i]) {
+            if(keys[i] == key) return vals[i];
+        }
+        return 0;
+    }
+
+    static int get_big_prime(int maxn) {
+        vector<bool> is_pre(maxn + 1, 1);
+        is_pre[0] = is_pre[1] = 0;
+        for(int i = 2; i * i <= maxn; ++i) {
+            if(is_pre[i]) {
+                for(int j = i * i; j <= maxn; j += i) {
+                    is_pre[j] = 0;
+                }
+            }
+        }
+        for(int i = maxn; i >= 0; --i) {
+            if(is_pre[i]) return i;
+        }
+        return -1;
+    }
+};
