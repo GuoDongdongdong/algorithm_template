@@ -68,7 +68,7 @@ class SegTreeLazySumAdd{
         }
         update(p, cl, cr);
         int cm = (cl + cr) / 2;
-        if(l <= cl) {
+        if(l <= cm) {
             __range_add(2 * p, l, r, cl, cm, val);
         }
         if(r > cm) {
@@ -88,6 +88,65 @@ public:
 
     void range_add(int l, int r, T val) {
         __range_add(1, l, r, 0, arr.size() - 1, val);
+    }
+};
+
+class SegTreeDynamicSumAdd {
+    struct Node {
+        int left, right, sum, lazy;
+        Node(int l = 0, int r = 0, int s = 0, int la = -1): left(l), right(r), sum(s), lazy(la) {}
+    };
+    int n, cnt, root;
+    Node nodes[1'000'000 * 2]; // note that you need estimate node count upper bound.
+    SegTreeDynamicSumAdd(int _n): n(_n), cnt(), root(), nodes() {}
+
+    void pushdown(int p, int cl, int cr) {
+        if(nodes[p].lazy == -1 || cl == cr) return ;
+        if(nodes[p].left == 0) {
+            nodes[p].left = ++cnt;
+            nodes[nodes[p].left] = {0, 0, 0, -1};
+        }
+        if(nodes[p].right == 0) {
+            nodes[p].right = ++cnt;
+            nodes[nodes[p].right] = {0, 0, 0, -1};
+        }
+        int cm = (cl + cr) / 2;
+        nodes[nodes[p].left].sum = (cm - cl + 1) * nodes[p].lazy;
+        nodes[nodes[p].right].sum = (cr - cm) * nodes[p].lazy;
+        nodes[nodes[p].left].lazy = nodes[nodes[p].right].lazy = nodes[p].lazy;
+        nodes[p].lazy = -1;
+    }
+    int __query_sum(int &p, int l, int r, int cl, int cr) {
+        if(p == 0) {
+            p = ++cnt;
+            return 0;
+        }
+        if(l <= cl && cr <= r) return nodes[p].sum;
+        pushdown(p, cl, cr);
+        int res = 0;
+        int cm = (cl + cr) / 2;
+        if(l <= cm) res += __query_sum(nodes[p].left, l, r, cl, cm);
+        if(cm < r) res += __query_sum(nodes[p].right, l, r, cm + 1, cr);
+        return res;
+    }
+    int query_sum(int l, int r) {
+        return __query_sum(root, l, r, 0, n - 1);
+    }
+    void __update(int &p, int l, int r, int cl, int cr, int val) {
+        if(p == 0) p = ++cnt;
+        if(l <= cl && cr <= r) {
+            nodes[p].sum = (cr - cl + 1) * val;
+            nodes[p].lazy = val;
+            return ;
+        }
+        pushdown(p, cl, cr);
+        int cm = (cl + cr) / 2;
+        if(l <= cm) __update(nodes[p].left, l, r, cl, cm, val);
+        if(cm < r) __update(nodes[p].right, l, r, cm + 1, cr, val);
+        nodes[p].sum = nodes[nodes[p].left].sum + nodes[nodes[p].right].sum;
+    }
+    void update(int l, int r, int val) {
+        __update(root, l, r, 0, n - 1, val);
     }
 };
 
